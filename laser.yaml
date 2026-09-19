@@ -1,0 +1,34 @@
+spec: "1.0"
+
+#define the physical port the fake machine uses. 
+#we chose RS232 serial port named asrl1
+interfaces:
+  ASRL:
+  1:
+devices:
+  device 1:
+    eom:
+      ASRL INSTR:
+        q: "\n"
+        r: "\n"
+    
+    error: "ERROR"
+    
+    dialogues:
+      - q: "*IDN?"
+        r: "Quantum Fake Machine, Photon laser"
+    
+    properties: 
+      voltage:
+        # by default, the state is 0
+        default: 0.0
+
+        # if the question is VOLT?, reply with the voltage variable value 
+        # upto three decimal places
+        getter:
+          q: "VOLT?"
+          r: "{:.3f}"
+        
+        #set the voltage. 
+        setter:
+          q: "VOLT {:.3f}"
