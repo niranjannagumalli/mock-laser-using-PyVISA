@@ -4,7 +4,7 @@ spec: "1.0"
 #we chose RS232 serial port named asrl1
 interfaces:
   ASRL:
-  1:
+    1:
 devices:
   device 1:
     eom:
@@ -15,20 +15,26 @@ devices:
     error: "ERROR"
     
     dialogues:
-      - q: "*IDN?"
-        r: "Quantum Fake Machine, Photon laser"
+      -  q: "*IDN?"
+         r: "Quantum Fake Machine, Photon laser"
     
     properties: 
       voltage:
         # by default, the state is 0
-        default: 0.0
+        default: 100.0
+        
 
         # if the question is VOLT?, reply with the voltage variable value 
         # upto three decimal places
         getter:
           q: "VOLT?"
-          r: "{:.3f}"
+          r: "{RANDOM(0, 10, 1):.3f}"
         
         #set the voltage. 
         setter:
           q: "VOLT {:.3f}"
+        specs:
+          type: float
+resources:
+    ASRL1::INSTR:
+        device: device 1
