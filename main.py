@@ -2,6 +2,8 @@ import pyvisa
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd 
+from scipy.optimize import curve_fit    
 
 
 def run_experiment():
@@ -54,10 +56,33 @@ def run_experiment():
         line.set_ydata(measured_photons)
         fig.canvas.draw()
         fig.canvas.flush_events()
-    
-    plt.ioff()
-    plt.show()
 
+    plt.ioff()
+    # plt.show()
+
+    #now lets store the data in a csv file
+    df = pd.DataFrame({
+        "Voltage_V": voltages,
+        "Photon_Counts": measured_photons
+    })
+    df.to_csv(f"experiment_log_{time.time()}.csv", index=False)
+    print("\nData saved to experiment_log.csv")
+
+    def linear_model(x, m, b):
+        return m * x + b
+
+    active_region = df[df['Voltage_V'] > 2.0]
+    popt, _ = curve_fit(linear_model, active_region['Voltage_V'], active_region['Photon_Counts'])
+    
+    slope, intercept = popt
+    print(f"Analysis Complete: Laser efficiency (slope) is {slope:.2f} photons/Volt")
+
+    # Plot the SciPy fit over the raw data
+    ax.plot(active_region['Voltage_V'], linear_model(active_region['Voltage_V'], slope, intercept), 
+            'r--', linewidth=2, label=f'SciPy Fit (m={slope:.0f})')
+    ax.legend()
+
+    plt.show() # Keep the final plot window open
 
     return inst
 
