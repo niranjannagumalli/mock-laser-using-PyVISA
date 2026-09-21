@@ -28,13 +28,14 @@ devices:
         # upto three decimal places
         getter:
           q: "VOLT?"
-          r: "{RANDOM(0, 10, 1):.3f}"
+          r: "{:.3f}"
         
         #set the voltage. 
         setter:
           q: "VOLT {:.3f}"
         specs:
           type: float
+# here we're letting it know that the laser is connected to the system at a specific interface
 resources:
     ASRL1::INSTR:
         device: device 1
