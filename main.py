@@ -6,12 +6,64 @@ import pandas as pd
 from scipy.optimize import curve_fit    
 
 
-def run_experiment():
-    rm = pyvisa.ResourceManager('laser.yaml@sim')
-    inst = rm.open_resource('ASRL1::INSTR')
-    inst.write_termination = '\n'
-    inst.read_termination = '\n'
-    print(f"Connected to: {inst.query('*IDN?')}")   
+class LaserController:
+    """
+        This is the class which handles all the access with the laser
+    """
+
+    def __init__(self, resource_string = 'ASRL1::INSTR', backend = "laser.yaml@sim", ):
+        self.rm = pyvisa.ResourceManager(backend)
+        self.inst = self.rm.open_resource(resource_string)
+        self.inst.write_termination = '\n'
+        self.inst.read_termination = '\n'    
+
+    def identify(self):
+        return self.inst.query('*IDN?')
+    
+    def setVoltage(self, voltage: float):
+        
+        self.inst.write(f"VOLT {voltage:.3f}")
+
+    def getVoltage(self):
+        print(self.inst.query("VOLT?"))
+        return float(self.inst.query("VOLT?"))
+
+    def close(self):
+        self.inst.close()
+
+
+def readSimulatedDetector(voltage, threshold= 2.0, efficiency=500):
+    '''
+    simulates a photon detectors response with some added noise
+    '''
+    photons = 0
+    if voltage < 2.0:
+        #somebackground noise
+        photons = np.random.normal(10,3)
+    else:
+        photons = ((voltage - 2.0)* 500) + np.random.normal(0,20)
+    return photons
+
+
+
+def linear_model(x, m, b):
+    return m * x + b
+
+def calculateEfficiency(df):
+
+    active_region = df[df['Voltage_V'] > 2.0]
+    popt, _ = curve_fit(linear_model, active_region['Voltage_V'], active_region['Photon_Counts'])
+    
+    slope, intercept = popt
+    return slope, intercept
+
+
+def main():
+    laser = LaserController(
+        resource_string ='ASRL1::INSTR',
+        backend         ='laser.yaml@sim'
+    )
+    print(laser.identify())
 
     voltages = np.linspace(0.0, 5.0, 25)
     measured_photons = []
@@ -32,23 +84,20 @@ def run_experiment():
 
     # now we slowly set the voltage and read the voltage back(ik its dumb) and keep increasing. 
     # for everytime we read teh value back, we calculate the number of photons which could have been emitted + some noise. 
-
+    
     for voltage in voltages:
         #set the voltage
-        inst.write(f"VOLT {voltage:.3f}")
+        laser.setVoltage(voltage)
+        print(type(voltage))
 
         # we simulate hardware delay, XD
         time.sleep(0.1)
 
         #now we read it back
-        read_voltage = float(inst.query("VOLT?"))
+        readVoltage = laser.getVoltage()
 
         #simulate a real laser which is linear above a certain voltage. 
-        if read_voltage < 2.0:
-            #somebackground noise
-            photons = np.random.normal(10,3)
-        else:
-            photons = ((read_voltage - 2.0)* 500) + np.random.normal(0,20)
+        photons = readSimulatedDetector(voltage=readVoltage)    
 
         measured_photons.append(photons)
 
@@ -58,33 +107,28 @@ def run_experiment():
         fig.canvas.flush_events()
 
     plt.ioff()
-    # plt.show()
-
+    #we close the connection to laser
+    laser.close()
+        
     #now lets store the data in a csv file
     df = pd.DataFrame({
         "Voltage_V": voltages,
         "Photon_Counts": measured_photons
     })
     df.to_csv(f"experiment_log_{time.time()}.csv", index=False)
-    print("\nData saved to experiment_log.csv")
+    print("\nData saved to experiment_log_<timestamp>.csv")    
 
-    def linear_model(x, m, b):
-        return m * x + b
-
-    active_region = df[df['Voltage_V'] > 2.0]
-    popt, _ = curve_fit(linear_model, active_region['Voltage_V'], active_region['Photon_Counts'])
     
-    slope, intercept = popt
+    # analysis
+    slope, intercept = calculateEfficiency(df)
     print(f"Analysis Complete: Laser efficiency (slope) is {slope:.2f} photons/Volt")
 
-    # Plot the SciPy fit over the raw data
-    ax.plot(active_region['Voltage_V'], linear_model(active_region['Voltage_V'], slope, intercept), 
-            'r--', linewidth=2, label=f'SciPy Fit (m={slope:.0f})')
+    # Plot the fit
+    active_v = df[df['Voltage_V'] > 2.0]['Voltage_V']
+    ax.plot(active_v, slope * active_v + intercept, 'r--', linewidth=2, label=f'SciPy Fit (m={slope:.0f})')
     ax.legend()
+    plt.show()    
 
-    plt.show() # Keep the final plot window open
 
-    return inst
-
-instrument = run_experiment()
-
+if __name__ == "__main__":
+    main()
