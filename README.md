@@ -11,12 +11,12 @@ This project implements a modular, hardware driver(LaserController) to manage SC
 
 
 ## Libraries used
-1. pyVISA-sim: Provides a simulated backend via YAML configuration to emulate instrument memory states and hardware responses.
-2. pyVISA: To manage hardware resources and handle SCPI-based serial communication (RS-232) with the instrument.
-3. NumPy: Generates the linear parameter sweep arrays and injects Gaussian noise to simulate physical dark counts and photon shot-noise. 
-4. Pandas: Structures the acquired experimental data into DataFrames for robust serialization and CSV logging.
-5. SciPy: Utilizes curve_fit to perform linear regression on the active lasing region, to extract the slope.
-6. Matplotlib: for real time visualization of the data generated as the parameter sweep executes
+1. **PyVISA-sim**: Provides a simulated backend via YAML configuration to emulate instrument memory states and hardware responses.
+2. **PyVISA**: To manage hardware resources and handle SCPI-based serial communication (RS-232) with the instrument.
+3. **NumPy**: Generates the linear parameter sweep arrays and injects Gaussian noise to simulate physical dark counts and photon shot-noise. 
+4. **Pandas**: Structures the acquired experimental data into DataFrames for robust serialization and CSV logging.
+5. **SciPy**: Utilizes curve_fit to perform linear regression on the active lasing region, to extract the slope.
+6. **Matplotlib**: for real time visualization of the data generated as the parameter sweep executes
 
 
 ## Installation & Usage
