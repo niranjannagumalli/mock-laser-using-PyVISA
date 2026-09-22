@@ -31,4 +31,6 @@ python3 main.py
 ```
 
 An example plot
+
+
 <img src="examplePlot.png" alt="Simulated Laser Threshold Plot" width="600"/>
