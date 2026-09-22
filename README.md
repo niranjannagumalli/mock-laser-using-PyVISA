@@ -21,7 +21,7 @@ This project implements a modular, hardware driver(LaserController) to manage SC
 
 ## Installation & Usage
 
-### 1. Install Dependencies
+Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
